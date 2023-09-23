@@ -3,6 +3,7 @@ package mipsevm
 import (
 	"bytes"
 	"debug/elf"
+	_ "embed"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -221,4 +222,93 @@ func staticOracle(t *testing.T, preimageData []byte) *testOracle {
 			return preimageData
 		},
 	}
+}
+
+//go:embed add.wasm
+var addWasm []byte
+
+func wasmTestOracle(t *testing.T) (po PreimageOracle, stdOut string, stdErr string) {
+	a := uint64(3)
+	b := uint64(4)
+
+	encodeU64 := func(x uint64) []byte {
+		return binary.BigEndian.AppendUint64(nil, x)
+	}
+
+	codeHash := crypto.Keccak256Hash(addWasm)
+
+	var diff []byte
+	diff = append(diff, crypto.Keccak256(encodeU64(a))...)
+	diff = append(diff, crypto.Keccak256(encodeU64(b))...)
+
+	diffHash := crypto.Keccak256Hash(diff)
+
+	images := make(map[[32]byte][]byte)
+	images[preimage.LocalIndexKey(0).PreimageKey()] = codeHash[:]
+	images[preimage.LocalIndexKey(1).PreimageKey()] = diffHash[:]
+	images[preimage.LocalIndexKey(2).PreimageKey()] = encodeU64(a + b)
+
+	oracle := &testOracle{
+		hint: func(v []byte) {
+			parts := strings.Split(string(v), " ")
+			require.Len(t, parts, 2)
+			p, err := hex.DecodeString(parts[1])
+			require.NoError(t, err)
+			require.Len(t, p, 32)
+			h := common.Hash(*(*[32]byte)(p))
+			switch parts[0] {
+			case "fetch-state":
+				require.Equal(t, h, codeHash, "expecting request for pre-state pre-image")
+				images[preimage.Keccak256Key(codeHash).PreimageKey()] = addWasm
+			case "fetch-diff":
+				require.Equal(t, h, diffHash, "expecting request for diff pre-images")
+				images[preimage.Keccak256Key(diffHash).PreimageKey()] = diff
+				images[preimage.Keccak256Key(crypto.Keccak256Hash(encodeU64(a))).PreimageKey()] = encodeU64(a)
+				images[preimage.Keccak256Key(crypto.Keccak256Hash(encodeU64(b))).PreimageKey()] = encodeU64(b)
+			default:
+				t.Fatalf("unexpected hint: %q", parts[0])
+			}
+		},
+		getPreimage: func(k [32]byte) []byte {
+			p, ok := images[k]
+			if !ok {
+				t.Fatalf("missing pre-image %s", k)
+			}
+			return p
+		},
+	}
+
+	return oracle, fmt.Sprintf("computing %d + %d in wasm\nclaim %d is good!\n", a, b, a+b), "started!"
+}
+
+func TestWasm(t *testing.T) {
+
+	elfProgram, err := elf.Open("../example/bin/wasm.elf")
+	require.NoError(t, err, "open ELF file")
+
+	state, err := LoadELF(elfProgram)
+	require.NoError(t, err, "load ELF into state")
+
+	err = PatchGo(elfProgram, state)
+	require.NoError(t, err, "apply Go runtime patches")
+	require.NoError(t, PatchStack(state), "add initial stack")
+
+	oracle, expectedStdOut, expectedStdErr := wasmTestOracle(t)
+
+	var stdOutBuf, stdErrBuf bytes.Buffer
+	us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr))
+
+	for i := 0; i < 100_000_000; i++ {
+		if us.state.Exited {
+			break
+		}
+		_, err := us.Step(false)
+		require.NoError(t, err)
+	}
+
+	require.True(t, state.Exited, "must complete program")
+	require.Equal(t, uint8(0), state.ExitCode, "exit with 0")
+
+	require.Equal(t, expectedStdOut, stdOutBuf.String(), "stdout")
+	require.Equal(t, expectedStdErr, stdErrBuf.String(), "stderr")
 }
