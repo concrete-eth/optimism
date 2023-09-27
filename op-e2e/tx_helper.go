@@ -93,6 +93,7 @@ func SendL2Tx(t *testing.T, cfg SystemConfig, l2Client *ethclient.Client, privKe
 		GasTipCap: opts.GasTipCap,
 		GasFeeCap: opts.GasFeeCap,
 		Gas:       opts.Gas,
+		Data:      opts.Data,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

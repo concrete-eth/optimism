@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	geth "github.com/ethereum/go-ethereum/eth"
@@ -129,6 +130,10 @@ func (e *engineApiBackend) Database() ethdb.Database {
 
 func (e *engineApiBackend) Genesis() *core.Genesis {
 	return e.genesis
+}
+
+func (e *engineApiBackend) Concrete() concrete.PrecompileRegistry {
+	return e.Concrete()
 }
 
 func (s *L2Engine) EthClient() *ethclient.Client {

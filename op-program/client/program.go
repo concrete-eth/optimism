@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 
@@ -22,11 +23,11 @@ import (
 
 // Main executes the client program in a detached context and exits the current process.
 // The client runtime environment must be preset before calling this function.
-func Main(logger log.Logger) {
+func Main(logger log.Logger, concreteRegistry concrete.PrecompileRegistry) {
 	log.Info("Starting fault proof program client")
 	preimageOracle := CreatePreimageChannel()
 	preimageHinter := CreateHinterChannel()
-	if err := RunProgram(logger, preimageOracle, preimageHinter); errors.Is(err, cldr.ErrClaimNotValid) {
+	if err := RunProgram(logger, preimageOracle, preimageHinter, concreteRegistry); errors.Is(err, cldr.ErrClaimNotValid) {
 		log.Error("Claim is invalid", "err", err)
 		os.Exit(1)
 	} else if err != nil {
@@ -39,7 +40,7 @@ func Main(logger log.Logger) {
 }
 
 // RunProgram executes the Program, while attached to an IO based pre-image oracle, to be served by a host.
-func RunProgram(logger log.Logger, preimageOracle io.ReadWriter, preimageHinter io.ReadWriter) error {
+func RunProgram(logger log.Logger, preimageOracle io.ReadWriter, preimageHinter io.ReadWriter, concreteRegistry concrete.PrecompileRegistry) error {
 
 	pClient := preimage.NewOracleClient(preimageOracle)
 	hClient := preimage.NewHintWriter(preimageHinter)
@@ -58,13 +59,14 @@ func RunProgram(logger log.Logger, preimageOracle io.ReadWriter, preimageHinter 
 		bootInfo.L2ClaimBlockNumber,
 		l1PreimageOracle,
 		l2PreimageOracle,
+		concreteRegistry,
 	)
 }
 
 // runDerivation executes the L2 state transition, given a minimal interface to retrieve data.
-func runDerivation(logger log.Logger, cfg *rollup.Config, l2Cfg *params.ChainConfig, l1Head common.Hash, l2OutputRoot common.Hash, l2Claim common.Hash, l2ClaimBlockNum uint64, l1Oracle l1.Oracle, l2Oracle l2.Oracle) error {
+func runDerivation(logger log.Logger, cfg *rollup.Config, l2Cfg *params.ChainConfig, l1Head common.Hash, l2OutputRoot common.Hash, l2Claim common.Hash, l2ClaimBlockNum uint64, l1Oracle l1.Oracle, l2Oracle l2.Oracle, concreteRegistry concrete.PrecompileRegistry) error {
 	l1Source := l1.NewOracleL1Client(logger, l1Oracle, l1Head)
-	engineBackend, err := l2.NewOracleBackedL2Chain(logger, l2Oracle, l2Cfg, l2OutputRoot)
+	engineBackend, err := l2.NewOracleBackedL2Chain(logger, l2Oracle, l2Cfg, l2OutputRoot, concreteRegistry)
 	if err != nil {
 		return fmt.Errorf("failed to create oracle-backed L2 chain: %w", err)
 	}

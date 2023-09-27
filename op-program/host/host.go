@@ -22,6 +22,7 @@ import (
 	oppio "github.com/ethereum-optimism/optimism/op-program/io"
 	opservice "github.com/ethereum-optimism/optimism/op-service"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/log"
 )
 
@@ -31,31 +32,38 @@ type L2Source struct {
 }
 
 func Main(logger log.Logger, cfg *config.Config) error {
-	if err := cfg.Check(); err != nil {
-		return fmt.Errorf("invalid config: %w", err)
-	}
-	opservice.ValidateEnvVars(flags.EnvVarPrefix, flags.Flags, logger)
-	cfg.Rollup.LogDescription(logger, chaincfg.L2ChainIDToNetworkName)
+	concreteRegistry := concrete.NewRegistry()
+	return NewMainWithConcrete(concreteRegistry)(logger, cfg)
+}
 
-	ctx := context.Background()
-	if cfg.ServerMode {
-		preimageChan := cl.CreatePreimageChannel()
-		hinterChan := cl.CreateHinterChannel()
-		return PreimageServer(ctx, logger, cfg, preimageChan, hinterChan)
-	}
+func NewMainWithConcrete(concreteRegistry concrete.PrecompileRegistry) func(log log.Logger, config *config.Config) error {
+	return func(logger log.Logger, cfg *config.Config) error {
+		if err := cfg.Check(); err != nil {
+			return fmt.Errorf("invalid config: %w", err)
+		}
+		opservice.ValidateEnvVars(flags.EnvVarPrefix, flags.Flags, logger)
+		cfg.Rollup.LogDescription(logger, chaincfg.L2ChainIDToNetworkName)
 
-	if err := FaultProofProgram(ctx, logger, cfg); errors.Is(err, driver.ErrClaimNotValid) {
-		log.Crit("Claim is invalid", "err", err)
-	} else if err != nil {
-		return err
-	} else {
-		log.Info("Claim successfully verified")
+		ctx := context.Background()
+		if cfg.ServerMode {
+			preimageChan := cl.CreatePreimageChannel()
+			hinterChan := cl.CreateHinterChannel()
+			return PreimageServer(ctx, logger, cfg, preimageChan, hinterChan)
+		}
+
+		if err := FaultProofProgram(ctx, logger, cfg, concreteRegistry); errors.Is(err, driver.ErrClaimNotValid) {
+			log.Crit("Claim is invalid", "err", err)
+		} else if err != nil {
+			return err
+		} else {
+			log.Info("Claim successfully verified")
+		}
+		return nil
 	}
-	return nil
 }
 
 // FaultProofProgram is the programmatic entry-point for the fault proof program
-func FaultProofProgram(ctx context.Context, logger log.Logger, cfg *config.Config) error {
+func FaultProofProgram(ctx context.Context, logger log.Logger, cfg *config.Config, concreteRegistry concrete.PrecompileRegistry) error {
 	var (
 		serverErr chan error
 		pClientRW oppio.FileChannel
@@ -116,7 +124,7 @@ func FaultProofProgram(ctx context.Context, logger log.Logger, cfg *config.Confi
 		logger.Debug("Client program completed successfully")
 		return nil
 	} else {
-		return cl.RunProgram(logger, pClientRW, hClientRW)
+		return cl.RunProgram(logger, pClientRW, hClientRW, concreteRegistry)
 	}
 }
 

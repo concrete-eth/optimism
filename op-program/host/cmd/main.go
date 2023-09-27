@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-program/host/flags"
 	"github.com/ethereum-optimism/optimism/op-program/host/version"
 	oplog "github.com/ethereum-optimism/optimism/op-service/log"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/urfave/cli/v2"
 )
@@ -35,7 +36,9 @@ var VersionWithMeta = func() string {
 
 func main() {
 	args := os.Args
-	if err := run(args, host.Main); err != nil {
+	concreteRegistry := concrete.NewRegistry()
+	main := host.NewMainWithConcrete(concreteRegistry)
+	if err := run(args, main); err != nil {
 		log.Crit("Application failed", "err", err)
 	}
 }

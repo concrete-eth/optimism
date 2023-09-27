@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-program/client/l2/engineapi"
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/beacon"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -36,11 +37,13 @@ type OracleBackedL2Chain struct {
 	// Inserted blocks
 	blocks map[common.Hash]*types.Block
 	db     ethdb.KeyValueStore
+
+	concreteRegistry concrete.PrecompileRegistry
 }
 
 var _ engineapi.EngineBackend = (*OracleBackedL2Chain)(nil)
 
-func NewOracleBackedL2Chain(logger log.Logger, oracle Oracle, chainCfg *params.ChainConfig, l2OutputRoot common.Hash) (*OracleBackedL2Chain, error) {
+func NewOracleBackedL2Chain(logger log.Logger, oracle Oracle, chainCfg *params.ChainConfig, l2OutputRoot common.Hash, concreteRegistry concrete.PrecompileRegistry) (*OracleBackedL2Chain, error) {
 	output := oracle.OutputByRoot(l2OutputRoot)
 	outputV0, ok := output.(*eth.OutputV0)
 	if !ok {
@@ -66,6 +69,8 @@ func NewOracleBackedL2Chain(logger log.Logger, oracle Oracle, chainCfg *params.C
 		oracleHead: head.Header(),
 		blocks:     make(map[common.Hash]*types.Block),
 		db:         NewOracleBackedDB(oracle),
+
+		concreteRegistry: concreteRegistry,
 	}, nil
 }
 
@@ -228,4 +233,8 @@ func (o *OracleBackedL2Chain) SetFinalized(header *types.Header) {
 
 func (o *OracleBackedL2Chain) SetSafe(header *types.Header) {
 	o.safe = header
+}
+
+func (o *OracleBackedL2Chain) Concrete() concrete.PrecompileRegistry {
+	return o.concreteRegistry
 }

@@ -14,6 +14,8 @@ import (
 	oppconf "github.com/ethereum-optimism/optimism/op-program/host/config"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
+	"github.com/ethereum/go-ethereum/concrete/lib"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/stretchr/testify/require"
@@ -143,7 +145,16 @@ func testVerifyL2OutputRootEmptyBlock(t *testing.T, detached bool) {
 		L2Claim:            common.Hash(l2Claim),
 		L2ClaimBlockNumber: l2ClaimBlockNumber,
 		Detached:           detached,
-	})
+	}, &concrete.GenericPrecompileRegistry{})
+}
+
+type testConcretePrecompile struct {
+	lib.BlankPrecompile
+}
+
+func (p *testConcretePrecompile) Run(env concrete.Environment, input []byte) ([]byte, error) {
+	env.StorageStore(common.Hash{1}, common.Hash{2})
+	return []byte{}, nil
 }
 
 func testVerifyL2OutputRoot(t *testing.T, detached bool) {
@@ -157,6 +168,11 @@ func testVerifyL2OutputRoot(t *testing.T, detached bool) {
 	sys, err := cfg.Start()
 	require.Nil(t, err, "Error starting up system")
 	defer sys.Close()
+
+	pcAddr := common.HexToAddress("0x80")
+	concreteRegistry := concrete.NewRegistry()
+	concreteRegistry.AddPrecompile(0, pcAddr, &testConcretePrecompile{})
+	sys.Backends["sequencer"].APIBackend.SetConcrete(concreteRegistry)
 
 	log := testlog.Logger(t, log.LvlInfo)
 	log.Info("genesis", "l2", sys.RollupConfig.Genesis.L2, "l1", sys.RollupConfig.Genesis.L1, "l2_time", sys.RollupConfig.Genesis.L2Time)
@@ -205,6 +221,13 @@ func testVerifyL2OutputRoot(t *testing.T, detached bool) {
 		opts.Nonce = 4
 	})
 
+	t.Log("Sending transaction calling concrete precompile")
+	SendL2Tx(t, cfg, l2Seq, aliceKey, func(opts *TxOpts) {
+		opts.ToAddr = &pcAddr
+		opts.Nonce = 5
+		opts.Gas = 100_000
+	})
+
 	t.Log("Determine L2 claim")
 	l2ClaimBlockNumber, err := l2Seq.BlockNumber(ctx)
 	require.NoError(t, err, "get L2 claim block number")
@@ -225,7 +248,7 @@ func testVerifyL2OutputRoot(t *testing.T, detached bool) {
 		L2Claim:            common.Hash(l2Claim),
 		L2ClaimBlockNumber: l2ClaimBlockNumber,
 		Detached:           detached,
-	})
+	}, concreteRegistry)
 }
 
 type FaultProofProgramTestScenario struct {
@@ -238,7 +261,7 @@ type FaultProofProgramTestScenario struct {
 }
 
 // testFaultProofProgramScenario runs the fault proof program in several contexts, given a test scenario.
-func testFaultProofProgramScenario(t *testing.T, ctx context.Context, sys *System, s *FaultProofProgramTestScenario) {
+func testFaultProofProgramScenario(t *testing.T, ctx context.Context, sys *System, s *FaultProofProgramTestScenario, concreteRegistry concrete.PrecompileRegistry) {
 	preimageDir := t.TempDir()
 	fppConfig := oppconf.NewConfig(sys.RollupConfig, sys.L2GenesisCfg.Config, s.L1Head, s.L2Head, s.L2OutputRoot, common.Hash(s.L2Claim), s.L2ClaimBlockNumber)
 	fppConfig.L1URL = sys.NodeEndpoint("l1")
@@ -252,7 +275,7 @@ func testFaultProofProgramScenario(t *testing.T, ctx context.Context, sys *Syste
 	// Check the FPP confirms the expected output
 	t.Log("Running fault proof in fetching mode")
 	log := testlog.Logger(t, log.LvlInfo)
-	err := opp.FaultProofProgram(ctx, log, fppConfig)
+	err := opp.FaultProofProgram(ctx, log, fppConfig, concreteRegistry)
 	require.NoError(t, err)
 
 	t.Log("Shutting down network")
@@ -268,13 +291,13 @@ func testFaultProofProgramScenario(t *testing.T, ctx context.Context, sys *Syste
 	// Should be able to rerun in offline mode using the pre-fetched images
 	fppConfig.L1URL = ""
 	fppConfig.L2URL = ""
-	err = opp.FaultProofProgram(ctx, log, fppConfig)
+	err = opp.FaultProofProgram(ctx, log, fppConfig, concreteRegistry)
 	require.NoError(t, err)
 
 	// Check that a fault is detected if we provide an incorrect claim
 	t.Log("Running fault proof with invalid claim")
 	fppConfig.L2Claim = common.Hash{0xaa}
-	err = opp.FaultProofProgram(ctx, log, fppConfig)
+	err = opp.FaultProofProgram(ctx, log, fppConfig, concreteRegistry)
 	if s.Detached {
 		require.Error(t, err, "exit status 1")
 	} else {

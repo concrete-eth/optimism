@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -331,6 +332,56 @@ func (db *MemoryStateDB) SetTransientState(addr common.Address, key, value commo
 	panic("transient state is unsupported")
 }
 
-func (db *MemoryStateDB) Prepare(rules params.Rules, sender, coinbase common.Address, dest *common.Address, precompiles []common.Address, txAccesses types.AccessList) {
+func (db *MemoryStateDB) Prepare(rules params.Rules, sender, coinbase common.Address, dest *common.Address, precompiles []common.Address, concretePrecompiles concrete.PrecompileMap, txAccesses types.AccessList) {
 	// no-op, no transient state to prepare, nor any access-list to set/prepare
+}
+
+// ======== Concrete ========
+
+func (db *MemoryStateDB) AddHashToAccessList(hash common.Hash) {
+	panic("hash access list is unsupported")
+}
+
+func (db *MemoryStateDB) HashInAccessList(hash common.Hash) bool {
+	panic("hash access list is unsupported")
+}
+
+func (db *MemoryStateDB) SetPersistentState(addr common.Address, key, value common.Hash) {
+	db.SetState(addr, key, value)
+}
+
+func (db *MemoryStateDB) GetPersistentState(addr common.Address, key common.Hash) common.Hash {
+	return db.GetState(addr, key)
+}
+
+func (db *MemoryStateDB) SetEphemeralState(addr common.Address, key, value common.Hash) {
+	panic("ephemeral state is unsupported")
+}
+
+func (db *MemoryStateDB) GetEphemeralState(addr common.Address, key common.Hash) common.Hash {
+	panic("ephemeral state is unsupported")
+}
+
+func (db *MemoryStateDB) AddPersistentPreimage(hash common.Hash, preimage []byte) {
+	panic("persistent preimage is unsupported")
+}
+
+func (db *MemoryStateDB) GetPersistentPreimage(hash common.Hash) []byte {
+	panic("persistent preimage is unsupported")
+}
+
+func (db *MemoryStateDB) GetPersistentPreimageSize(hash common.Hash) int {
+	panic("persistent preimage is unsupported")
+}
+
+func (db *MemoryStateDB) AddEphemeralPreimage(hash common.Hash, preimage []byte) {
+	panic("ephemeral preimage is unsupported")
+}
+
+func (db *MemoryStateDB) GetEphemeralPreimage(hash common.Hash) []byte {
+	panic("ephemeral preimage is unsupported")
+}
+
+func (db *MemoryStateDB) GetEphemeralPreimageSize(hash common.Hash) int {
+	panic("ephemeral preimage is unsupported")
 }

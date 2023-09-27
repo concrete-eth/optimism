@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum/go-ethereum/beacon/engine"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -38,6 +39,8 @@ type EngineBackend interface {
 	SetCanonical(head *types.Block) (common.Hash, error)
 	SetFinalized(header *types.Header)
 	SetSafe(header *types.Header)
+
+	Concrete() concrete.PrecompileRegistry
 
 	consensus.ChainHeaderReader
 }

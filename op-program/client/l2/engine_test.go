@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -260,5 +261,9 @@ func (s stubEngineBackend) GetHeaderByHash(hash common.Hash) *types.Header {
 }
 
 func (s stubEngineBackend) GetTd(hash common.Hash, number uint64) *big.Int {
+	panic("unsupported")
+}
+
+func (s stubEngineBackend) Concrete() concrete.PrecompileRegistry {
 	panic("unsupported")
 }

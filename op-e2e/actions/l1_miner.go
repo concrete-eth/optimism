@@ -4,6 +4,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/state"
@@ -117,9 +118,10 @@ func (s *L1Miner) IncludeTx(t Testing, tx *types.Transaction) {
 		t.InvalidAction("action takes too much gas: %d, only have %d", tx.Gas(), uint64(*s.l1GasPool))
 		return
 	}
+	concretePcs := concrete.PrecompileMap{}
 	s.l1BuildingState.SetTxContext(tx.Hash(), len(s.l1Transactions))
 	receipt, err := core.ApplyTransaction(s.l1Cfg.Config, s.l1Chain, &s.l1BuildingHeader.Coinbase,
-		s.l1GasPool, s.l1BuildingState, s.l1BuildingHeader, tx, &s.l1BuildingHeader.GasUsed, *s.l1Chain.GetVMConfig())
+		s.l1GasPool, s.l1BuildingState, s.l1BuildingHeader, tx, &s.l1BuildingHeader.GasUsed, *s.l1Chain.GetVMConfig(), concretePcs)
 	if err != nil {
 		s.l1TxFailed = append(s.l1TxFailed, tx)
 		t.Fatalf("failed to apply transaction to L1 block (tx %d): %v", len(s.l1Transactions), err)

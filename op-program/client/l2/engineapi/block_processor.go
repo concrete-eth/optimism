@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	"github.com/ethereum/go-ethereum/core"
@@ -27,6 +28,7 @@ type BlockDataProvider interface {
 	Engine() consensus.Engine
 	GetVMConfig() *vm.Config
 	Config() *params.ChainConfig
+	Concrete() concrete.PrecompileRegistry
 	consensus.ChainHeaderReader
 }
 
@@ -92,8 +94,9 @@ func (b *BlockProcessor) CheckTxWithinGasLimit(tx *types.Transaction) error {
 func (b *BlockProcessor) AddTx(tx *types.Transaction) error {
 	txIndex := len(b.transactions)
 	b.state.SetTxContext(tx.Hash(), txIndex)
+	concretePcs := b.dataProvider.Concrete().Precompiles(b.header.Number.Uint64())
 	receipt, err := core.ApplyTransaction(b.dataProvider.Config(), b.dataProvider, &b.header.Coinbase,
-		b.gasPool, b.state, b.header, tx, &b.header.GasUsed, *b.dataProvider.GetVMConfig())
+		b.gasPool, b.state, b.header, tx, &b.header.GasUsed, *b.dataProvider.GetVMConfig(), concretePcs)
 	if err != nil {
 		return fmt.Errorf("failed to apply deposit transaction to L2 block (tx %d): %w", txIndex, err)
 	}
@@ -107,7 +110,10 @@ func (b *BlockProcessor) Assemble() (*types.Block, error) {
 }
 
 func (b *BlockProcessor) Commit() error {
-	root, err := b.state.Commit(b.dataProvider.Config().IsEIP158(b.header.Number))
+	root, err := b.state.CommitWithConcrete(
+		b.dataProvider.Concrete().Precompiles(b.header.Number.Uint64()),
+		b.dataProvider.Config().IsEIP158(b.header.Number),
+	)
 	if err != nil {
 		return fmt.Errorf("state write error: %w", err)
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/ethereum-optimism/optimism/op-program/client"
 	oplog "github.com/ethereum-optimism/optimism/op-service/log"
+	"github.com/ethereum/go-ethereum/concrete"
 )
 
 func main() {
@@ -13,5 +14,6 @@ func main() {
 		Format: "logfmt",
 		Color:  false,
 	})
-	client.Main(logger)
+	concreteRegistry := concrete.NewRegistry()
+	client.Main(logger, concreteRegistry)
 }

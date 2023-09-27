@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/concrete"
 	"github.com/ethereum/go-ethereum/consensus/beacon"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -201,7 +202,8 @@ func setupOracleBackedChainWithLowerHead(t *testing.T, blockCount int, headBlock
 	chainCfg, blocks, oracle := setupOracle(t, blockCount, headBlockNumber)
 	head := blocks[headBlockNumber].Hash()
 	stubOutput := eth.OutputV0{BlockHash: head}
-	chain, err := NewOracleBackedL2Chain(logger, oracle, chainCfg, common.Hash(eth.OutputRoot(&stubOutput)))
+	concreteRegistry := concrete.NewRegistry()
+	chain, err := NewOracleBackedL2Chain(logger, oracle, chainCfg, common.Hash(eth.OutputRoot(&stubOutput)), concreteRegistry)
 	require.NoError(t, err)
 	return blocks, chain
 }
