@@ -46,5 +46,8 @@
   "faultGameAbsolutePrestate": "0x41c7ae758795765c6664a5d39bf63841c71ff191e9189522bad8ebff5d4eca98",
   "faultGameMaxDepth": 30,
   "faultGameMaxDuration": 300,
-  "systemConfigStartBlock": 0
+  "systemConfigStartBlock": 0,
+  "l2TickGasLimit": "0x1E8480",
+  "l2TickOwnerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+  "l2TickTargetAddress": "0x0000000000000000000000000000000000000000"
 }

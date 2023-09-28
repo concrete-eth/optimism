@@ -175,6 +175,11 @@ type DeployConfig struct {
 	// FundDevAccounts configures whether or not to fund the dev accounts. Should only be used
 	// during devnet deployments.
 	FundDevAccounts bool `json:"fundDevAccounts"`
+
+	// Tick configuration
+	L2GenesisTickGasLimit hexutil.Uint64 `json:"l2TickGasLimit"`
+	L2GenesisTickOwner    common.Address `json:"l2TickOwnerAddress"`
+	L2GenesisTickTarget   common.Address `json:"l2TickTargetAddress"`
 }
 
 // Copy will deeply copy the DeployConfig. This does a JSON roundtrip to copy
@@ -322,6 +327,12 @@ func (d *DeployConfig) Check() error {
 	if d.L1BlockTime < d.L2BlockTime {
 		return fmt.Errorf("L2 block time (%d) is larger than L1 block time (%d)", d.L2BlockTime, d.L1BlockTime)
 	}
+	if d.L2GenesisTickGasLimit == 0 {
+		return fmt.Errorf("%w: L2TickGasLimit cannot be 0", ErrInvalidDeployConfig)
+	}
+	if d.L2GenesisTickOwner == (common.Address{}) {
+		return fmt.Errorf("%w: l2TickOwnerAddress cannot be address(0)", ErrInvalidDeployConfig)
+	}
 	return nil
 }
 
@@ -441,6 +452,7 @@ func (d *DeployConfig) RollupConfig(l1StartBlock *types.Block, l2GenesisBlockHas
 		DepositContractAddress: d.OptimismPortalProxy,
 		L1SystemConfigAddress:  d.SystemConfigProxy,
 		RegolithTime:           d.RegolithTime(l1StartBlock.Time()),
+		TickGasLimit:           uint64(d.L2GenesisTickGasLimit),
 	}, nil
 }
 
@@ -694,6 +706,10 @@ func NewL2StorageConfig(config *DeployConfig, block *types.Block) (state.Storage
 		"messenger":     predeploys.L2CrossDomainMessengerAddr,
 		"_initialized":  2,
 		"_initializing": false,
+	}
+	storage["Tick"] = state.StorageValues{
+		"_owner": config.L2GenesisTickOwner,
+		"target": config.L2GenesisTickTarget,
 	}
 	return storage, nil
 }

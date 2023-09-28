@@ -264,6 +264,10 @@ func checkPredeployConfig(client *ethclient.Client, name string) error {
 			if err := checkEAS(p, client); err != nil {
 				return err
 			}
+		case predeploys.TickAddr:
+			if err := checkTick(p, client); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
@@ -823,6 +827,19 @@ func checkEAS(addr common.Address, client *ethclient.Client) error {
 		return err
 	}
 	log.Info("EAS version", "version", version)
+	return nil
+}
+
+func checkTick(addr common.Address, client *ethclient.Client) error {
+	contract, err := bindings.NewTick(addr, client)
+	if err != nil {
+		return err
+	}
+	version, err := contract.Version(&bind.CallOpts{})
+	if err != nil {
+		return err
+	}
+	log.Info("Tick version", "version", version)
 	return nil
 }
 
