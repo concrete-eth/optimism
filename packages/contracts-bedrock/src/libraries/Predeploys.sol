@@ -147,4 +147,7 @@ library Predeploys {
             uint160(uint256(uint160(_addr)) & 0xffff | uint256(uint160(0xc0D3C0d3C0d3C0D3c0d3C0d3c0D3C0d3c0d30000)))
         );
     }
+
+    /// @notice Address of the Tick predeploy.
+    address internal constant TICK = 0x42000000000000000000000000000000000000f0;
 }

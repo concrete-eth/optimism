@@ -113,8 +113,14 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 		return nil, NewCriticalError(fmt.Errorf("failed to create l1InfoTx: %w", err))
 	}
 
-	txs := make([]hexutil.Bytes, 0, 1+len(depositTxs)+len(upgradeTxs))
+	tickTx, err := TickDepositBytes(seqNumber, l1Info, ba.cfg.TickGasLimit, ba.cfg.IsRegolith(nextL2Time))
+	if err != nil {
+		return nil, NewCriticalError(fmt.Errorf("failed to create tickTx: %w", err))
+	}
+
+	txs := make([]hexutil.Bytes, 0, 2+len(depositTxs)+len(upgradeTxs))
 	txs = append(txs, l1InfoTx)
+	txs = append(txs, tickTx)
 	txs = append(txs, depositTxs...)
 	txs = append(txs, upgradeTxs...)
 

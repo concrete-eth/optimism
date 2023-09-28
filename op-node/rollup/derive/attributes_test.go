@@ -27,6 +27,7 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		L2ChainID:              big.NewInt(102),
 		DepositContractAddress: common.Address{0xbb},
 		L1SystemConfigAddress:  common.Address{0xcc},
+		TickGasLimit:           100_000,
 	}
 
 	testSysCfg := eth.SystemConfig{
@@ -115,6 +116,8 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		epoch := l1Info.ID()
 		l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, 0, l1Info, 0)
 		require.NoError(t, err)
+		tickTx, err := TickDepositBytes(0, l1Info, cfg.TickGasLimit, false)
+		require.NoError(t, err)
 		l1Fetcher.ExpectFetchReceipts(epoch.Hash, l1Info, nil, nil)
 		attrBuilder := NewFetchingAttributesBuilder(cfg, l1Fetcher, l1CfgFetcher)
 		attrs, err := attrBuilder.PreparePayloadAttributes(context.Background(), l2Parent, epoch)
@@ -123,8 +126,9 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		require.Equal(t, l2Parent.Time+cfg.BlockTime, uint64(attrs.Timestamp))
 		require.Equal(t, eth.Bytes32(l1Info.InfoMixDigest), attrs.PrevRandao)
 		require.Equal(t, predeploys.SequencerFeeVaultAddr, attrs.SuggestedFeeRecipient)
-		require.Equal(t, 1, len(attrs.Transactions))
+		require.Equal(t, 2, len(attrs.Transactions))
 		require.Equal(t, l1InfoTx, []byte(attrs.Transactions[0]))
+		require.Equal(t, tickTx, []byte(attrs.Transactions[1]))
 		require.True(t, attrs.NoTxPool)
 	})
 	t.Run("next origin with deposits", func(t *testing.T) {
@@ -152,8 +156,10 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		epoch := l1Info.ID()
 		l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, 0, l1Info, 0)
 		require.NoError(t, err)
+		tickTx, err := TickDepositBytes(0, l1Info, cfg.TickGasLimit, false)
+		require.NoError(t, err)
 
-		l2Txs := append(append(make([]eth.Data, 0), l1InfoTx), usedDepositTxs...)
+		l2Txs := append(append(append(make([]eth.Data, 0), l1InfoTx), tickTx), usedDepositTxs...)
 
 		l1Fetcher.ExpectFetchReceipts(epoch.Hash, l1Info, receipts, nil)
 		attrBuilder := NewFetchingAttributesBuilder(cfg, l1Fetcher, l1CfgFetcher)
@@ -182,6 +188,8 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		epoch := l1Info.ID()
 		l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, l2Parent.SequenceNumber+1, l1Info, 0)
 		require.NoError(t, err)
+		tickTx, err := TickDepositBytes(l2Parent.SequenceNumber+1, l1Info, cfg.TickGasLimit, false)
+		require.NoError(t, err)
 
 		l1Fetcher.ExpectInfoByHash(epoch.Hash, l1Info, nil)
 		attrBuilder := NewFetchingAttributesBuilder(cfg, l1Fetcher, l1CfgFetcher)
@@ -191,8 +199,9 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		require.Equal(t, l2Parent.Time+cfg.BlockTime, uint64(attrs.Timestamp))
 		require.Equal(t, eth.Bytes32(l1Info.InfoMixDigest), attrs.PrevRandao)
 		require.Equal(t, predeploys.SequencerFeeVaultAddr, attrs.SuggestedFeeRecipient)
-		require.Equal(t, 1, len(attrs.Transactions))
+		require.Equal(t, 2, len(attrs.Transactions))
 		require.Equal(t, l1InfoTx, []byte(attrs.Transactions[0]))
+		require.Equal(t, tickTx, []byte(attrs.Transactions[1]))
 		require.True(t, attrs.NoTxPool)
 	})
 	// Test that the payload attributes builder changes the deposit format based on L2-time-based regolith activation
@@ -238,11 +247,14 @@ func TestPreparePayloadAttributes(t *testing.T) {
 				}
 				l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, 0, l1Info, time)
 				require.NoError(t, err)
+				tickTx, err := TickDepositBytes(0, l1Info, cfg.TickGasLimit, tc.regolith)
+				require.NoError(t, err)
 				l1Fetcher.ExpectFetchReceipts(epoch.Hash, l1Info, nil, nil)
 				attrBuilder := NewFetchingAttributesBuilder(cfg, l1Fetcher, l1CfgFetcher)
 				attrs, err := attrBuilder.PreparePayloadAttributes(context.Background(), l2Parent, epoch)
 				require.NoError(t, err)
 				require.Equal(t, l1InfoTx, []byte(attrs.Transactions[0]))
+				require.Equal(t, tickTx, []byte(attrs.Transactions[1]))
 			})
 		}
 	})
