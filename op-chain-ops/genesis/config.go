@@ -230,6 +230,11 @@ type DeployConfig struct {
 
 	// When Cancun activates. Relative to L1 genesis.
 	L1CancunTimeOffset *uint64 `json:"l1CancunTimeOffset,omitempty"`
+
+	// Tick configuration
+	L2GenesisTickGasLimit hexutil.Uint64 `json:"l2TickGasLimit"`
+	L2GenesisTickOwner    common.Address `json:"l2TickOwnerAddress"`
+	L2GenesisTickTarget   common.Address `json:"l2TickTargetAddress"`
 }
 
 // Copy will deeply copy the DeployConfig. This does a JSON roundtrip to copy
@@ -364,6 +369,12 @@ func (d *DeployConfig) Check() error {
 	// L2 block time must always be smaller than L1 block time
 	if d.L1BlockTime < d.L2BlockTime {
 		return fmt.Errorf("L2 block time (%d) is larger than L1 block time (%d)", d.L2BlockTime, d.L1BlockTime)
+	}
+	if d.L2GenesisTickGasLimit == 0 {
+		return fmt.Errorf("%w: L2TickGasLimit cannot be 0", ErrInvalidDeployConfig)
+	}
+	if d.L2GenesisTickOwner == (common.Address{}) {
+		return fmt.Errorf("%w: l2TickOwnerAddress cannot be address(0)", ErrInvalidDeployConfig)
 	}
 	if d.RequiredProtocolVersion == (params.ProtocolVersion{}) {
 		log.Warn("RequiredProtocolVersion is empty")
@@ -564,6 +575,7 @@ func (d *DeployConfig) RollupConfig(l1StartBlock *types.Block, l2GenesisBlockHas
 		EclipseTime:            d.EclipseTime(l1StartBlock.Time()),
 		FjordTime:              d.FjordTime(l1StartBlock.Time()),
 		InteropTime:            d.InteropTime(l1StartBlock.Time()),
+		TickGasLimit:           uint64(d.L2GenesisTickGasLimit),
 	}, nil
 }
 
@@ -866,6 +878,10 @@ func NewL2StorageConfig(config *DeployConfig, block *types.Block) (state.Storage
 	}
 	storage["ProxyAdmin"] = state.StorageValues{
 		"_owner": config.ProxyAdminOwner,
+	}
+	storage["Tick"] = state.StorageValues{
+		"_owner": config.L2GenesisTickOwner,
+		"target": config.L2GenesisTickTarget,
 	}
 	return storage, nil
 }

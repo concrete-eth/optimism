@@ -77,4 +77,7 @@ library Predeploys {
 
     /// @notice Address of the EAS predeploy.
     address internal constant EAS = 0x4200000000000000000000000000000000000021;
+
+    /// @notice Address of the Tick predeploy.
+    address internal constant TICK = 0x42000000000000000000000000000000000000f0;
 }

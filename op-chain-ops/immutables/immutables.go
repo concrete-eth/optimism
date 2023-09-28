@@ -247,6 +247,8 @@ func l2ImmutableDeployer(backend *backends.SimulatedBackend, opts *bind.Transact
 		_, tx, _, err = bindings.DeployOptimismMintableERC721Factory(opts, backend, bridge, remoteChainId)
 	case "EAS":
 		_, tx, _, err = bindings.DeployEAS(opts, backend)
+	case "Tick":
+		_, tx, _, err = bindings.DeployTick(opts, backend)
 	default:
 		return tx, fmt.Errorf("unknown contract: %s", deployment.Name)
 	}
