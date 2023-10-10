@@ -35,6 +35,7 @@ contract Tick is Semver, Ownable, ITick {
         if (target == address(0)) {
             return;
         }
-        ITick(target).tick();
+        (bool success, ) = target.call(abi.encodeWithSignature("tick()"));
+        require(success);
     }
 }
