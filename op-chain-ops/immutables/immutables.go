@@ -68,6 +68,7 @@ type PredeploysImmutableConfig struct {
 		Name string
 	}
 	Create2Deployer struct{}
+	Tick            struct{}
 }
 
 // Check will ensure that the required fields are set on the config.
