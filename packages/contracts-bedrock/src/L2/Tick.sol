@@ -2,7 +2,7 @@
 pragma solidity 0.8.15;
 
 import { Predeploys } from "../libraries/Predeploys.sol";
-import { Semver } from "../universal/Semver.sol";
+import { ISemver } from "src/universal/ISemver.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface ITick {
@@ -13,15 +13,15 @@ interface ITick {
 /// @custom:predeploy 0x42000000000000000000000000000000000000f0
 /// @title Tick
 /// @notice The Tick predeploy ticks the chain.
-contract Tick is Semver, Ownable, ITick {
+contract Tick is Ownable, ITick, ISemver {
+    /// @custom:semver 0.1.0
+    string public constant version = "0.1.0";
+
     /// @notice Address of the special depositor account.
     address public constant DEPOSITOR_ACCOUNT = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
 
     /// @notice Address of the tick contract to be called.
     address public target;
-
-    /// @custom:semver 0.0.1
-    constructor() Ownable() Semver(0, 0, 1) {}
 
     /// @notice Allows the owner to modify the target address.
     /// @param _target New target address.
