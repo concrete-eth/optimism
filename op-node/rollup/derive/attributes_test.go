@@ -116,7 +116,7 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		epoch := l1Info.ID()
 		l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, 0, l1Info, 0)
 		require.NoError(t, err)
-		tickTx, err := TickDepositBytes(0, l1Info, cfg.TickGasLimit, false)
+		tickTx, err := TickDepositBytes(cfg, testSysCfg, 0, l1Info, 0)
 		require.NoError(t, err)
 		l1Fetcher.ExpectFetchReceipts(epoch.Hash, l1Info, nil, nil)
 		attrBuilder := NewFetchingAttributesBuilder(cfg, l1Fetcher, l1CfgFetcher)
@@ -156,7 +156,7 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		epoch := l1Info.ID()
 		l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, 0, l1Info, 0)
 		require.NoError(t, err)
-		tickTx, err := TickDepositBytes(0, l1Info, cfg.TickGasLimit, false)
+		tickTx, err := TickDepositBytes(cfg, testSysCfg, 0, l1Info, 0)
 		require.NoError(t, err)
 
 		l2Txs := append(append(append(make([]eth.Data, 0), l1InfoTx), tickTx), usedDepositTxs...)
@@ -188,7 +188,7 @@ func TestPreparePayloadAttributes(t *testing.T) {
 		epoch := l1Info.ID()
 		l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, l2Parent.SequenceNumber+1, l1Info, 0)
 		require.NoError(t, err)
-		tickTx, err := TickDepositBytes(l2Parent.SequenceNumber+1, l1Info, cfg.TickGasLimit, false)
+		tickTx, err := TickDepositBytes(cfg, testSysCfg, l2Parent.SequenceNumber+1, l1Info, 0)
 		require.NoError(t, err)
 
 		l1Fetcher.ExpectInfoByHash(epoch.Hash, l1Info, nil)
@@ -247,7 +247,7 @@ func TestPreparePayloadAttributes(t *testing.T) {
 				}
 				l1InfoTx, err := L1InfoDepositBytes(cfg, testSysCfg, 0, l1Info, time)
 				require.NoError(t, err)
-				tickTx, err := TickDepositBytes(0, l1Info, cfg.TickGasLimit, tc.regolith)
+				tickTx, err := TickDepositBytes(cfg, testSysCfg, 0, l1Info, time)
 				require.NoError(t, err)
 				l1Fetcher.ExpectFetchReceipts(epoch.Hash, l1Info, nil, nil)
 				attrBuilder := NewFetchingAttributesBuilder(cfg, l1Fetcher, l1CfgFetcher)

@@ -70,7 +70,7 @@ func TestAttributesQueue(t *testing.T) {
 	rollupCfg := rollup.Config{}
 	l1InfoTx, err := L1InfoDepositBytes(&rollupCfg, expectedL1Cfg, safeHead.SequenceNumber+1, l1Info, 0)
 	require.NoError(t, err)
-	tickTx, err := TickDepositBytes(safeHead.SequenceNumber+1, l1Info, cfg.TickGasLimit, false)
+	tickTx, err := TickDepositBytes(&rollupCfg, expectedL1Cfg, safeHead.SequenceNumber+1, l1Info, 0)
 	require.NoError(t, err)
 	attrs := eth.PayloadAttributes{
 		Timestamp:             eth.Uint64Quantity(safeHead.Time + cfg.BlockTime),

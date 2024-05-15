@@ -73,6 +73,9 @@ contract DeployConfig is Script {
     uint256 public daResolveWindow;
     uint256 public daBondSize;
     uint256 public daResolverRefundPercentage;
+    uint256 public l2TickGasLimit;
+    address public l2TickOwnerAddress;
+    address public l2TickTargetAddress;
 
     function read(string memory _path) public {
         console.log("DeployConfig: reading file %s", _path);
@@ -145,6 +148,10 @@ contract DeployConfig is Script {
         daResolveWindow = _readOr(_json, "$.daResolveWindow", 1000);
         daBondSize = _readOr(_json, "$.daBondSize", 1000000000);
         daResolverRefundPercentage = _readOr(_json, "$.daResolverRefundPercentage", 0);
+
+        l2TickGasLimit = _readOr(_json, "$.l2TickGasLimit", 0);
+        l2TickOwnerAddress = stdJson.readAddress(_json, "$.l2TickOwnerAddress");
+        l2TickTargetAddress = stdJson.readAddress(_json, "$.l2TickTargetAddress");
     }
 
     function l1StartingBlockTag() public returns (bytes32) {

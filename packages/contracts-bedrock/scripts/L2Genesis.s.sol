@@ -20,6 +20,7 @@ import { OptimismMintableERC20Factory } from "src/universal/OptimismMintableERC2
 import { OptimismMintableERC721Factory } from "src/universal/OptimismMintableERC721Factory.sol";
 import { BaseFeeVault } from "src/L2/BaseFeeVault.sol";
 import { L1FeeVault } from "src/L2/L1FeeVault.sol";
+import { Tick } from "src/L2/Tick.sol";
 import { GovernanceToken } from "src/governance/GovernanceToken.sol";
 import { L1CrossDomainMessenger } from "src/L1/L1CrossDomainMessenger.sol";
 import { L1StandardBridge } from "src/L1/L1StandardBridge.sol";
@@ -236,6 +237,8 @@ contract L2Genesis is Deployer {
         setSchemaRegistry(); // 20
         setEAS(); // 21
         setGovernanceToken(); // 42: OP (not behind a proxy)
+
+        setTick(); // F0
     }
 
     function setProxyAdmin() public {
@@ -466,6 +469,22 @@ contract L2Genesis is Deployer {
         /// Reset so its not included state dump
         vm.etch(address(eas), "");
         vm.resetNonce(address(eas));
+    }
+
+     /// @notice This predeploy is following the safety invariant #2.
+    function setTick() public {
+        Tick tick = new Tick({
+            _owner: cfg.l2TickOwnerAddress(),
+            _target: cfg.l2TickTargetAddress()
+        });
+
+        address impl = Predeploys.predeployToCodeNamespace(Predeploys.TICK);
+        console.log("Setting %s implementation at: %s", "Tick", impl);
+        vm.etch(impl, address(tick).code);
+
+        /// Reset so its not included state dump
+        vm.etch(address(tick), "");
+        vm.resetNonce(address(tick));
     }
 
     /// @notice Sets all the preinstalls.

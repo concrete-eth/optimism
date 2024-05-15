@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/ethereum-optimism/optimism/op-bindings/predeploys"
+	"github.com/ethereum-optimism/optimism/op-node/rollup"
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 )
 
@@ -24,7 +25,7 @@ var (
 	TickAddress          = predeploys.TickAddr
 )
 
-func TickDeposit(seqNumber uint64, block eth.BlockInfo, gasLimit uint64, regolith bool) (*types.DepositTx, error) {
+func TickDeposit(rollupCfg *rollup.Config, sysCfg eth.SystemConfig, seqNumber uint64, block eth.BlockInfo, l2BlockTime uint64) (*types.DepositTx, error) {
 	source := L1InfoDepositSource{
 		L1BlockHash: block.Hash(),
 		SeqNumber:   seqNumber,
@@ -35,19 +36,18 @@ func TickDeposit(seqNumber uint64, block eth.BlockInfo, gasLimit uint64, regolit
 		To:                  &TickAddress,
 		Mint:                nil,
 		Value:               big.NewInt(0),
-		Gas:                 gasLimit,
+		Gas:                 sysCfg.TickGasLimit,
 		IsSystemTransaction: true,
 		Data:                TickFuncBytes4,
 	}
-	if regolith {
+	if rollupCfg.IsRegolith(l2BlockTime) {
 		out.IsSystemTransaction = false
-		out.Gas = gasLimit
 	}
 	return out, nil
 }
 
-func TickDepositBytes(seqNumber uint64, l1Info eth.BlockInfo, gasLimit uint64, regolith bool) ([]byte, error) {
-	dep, err := TickDeposit(seqNumber, l1Info, gasLimit, regolith)
+func TickDepositBytes(rollupCfg *rollup.Config, sysCfg eth.SystemConfig, seqNumber uint64, l1Info eth.BlockInfo, l2BlockTime uint64) ([]byte, error) {
+	dep, err := TickDeposit(rollupCfg, sysCfg, seqNumber, l1Info, l2BlockTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create tick tx: %w", err)
 	}
