@@ -64,7 +64,7 @@ contract L2Genesis is Deployer {
     /// @notice Default Anvil dev accounts. Only funded if `cfg.fundDevAccounts == true`.
     /// Also known as "test test test test test test test test test test test junk" mnemonic accounts,
     /// on path "m/44'/60'/0'/0/i" (where i is the account index).
-    address[30] internal devAccounts = [
+    address[51] internal devAccounts = [
         0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266, // 0
         0x70997970C51812dc3A010C7d01b50e0d17dc79C8, // 1
         0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC, // 2
@@ -95,6 +95,29 @@ contract L2Genesis is Deployer {
         0x87BdCE72c06C21cd96219BD8521bDF1F42C78b5e, // 27
         0x40Fc963A729c542424cD800349a7E4Ecc4896624, // 28
         0x9DCCe783B6464611f38631e6C851bf441907c710 // 29
+
+        // Custom mnemonic accounts
+        0xa2FC986eFdcc89A451fAe091ddDD324f68C7F6C6
+        0x7651669f5A2253375EA511Af8badf1Eb34242843
+        0x88cb73d010499941b66dF26F3845DC3a95659d17
+        0xF46a50040E7BC6206abEd2b58b191562401986F2
+        0x132cF18c9970B747691bd9bCD8295F7A01215da0
+        0x9C29a907feF47b30eaDb30B5D88adAcb13bAa9f1
+        0x89F577286a1759f5bA0dF3b8B1e6851BdBc75C67
+        0x7a31dC7bBB7046b9D90Af35789eAfd288BD3242F
+        0x05468b4889d16Eb4783090ae23505949cd87B462
+        0xE9d13c6f0c63bA23fD5902feCA5e9AC9584320E5
+        0xB71d115a92433a4dc36F5EAF4cb078d3759A0390
+        0xF1b0CE750801F237793040427ECDD8366504C61b
+        0xBE6298da164e59641496CEaf09a96e7e61460074
+        0xB0eeE1743693dE695B94F806E98dAcd8EEb10ec5
+        0xe0489cCd21089DF1b94BA3773c6332831c7e3C7a
+        0x8b5AD1159137Fb5d934045E8ac65DE30ed55Db32
+        0x3DE68e54d2897d4832d27e1f4FCc3f4e15d0B79B
+        0xe1b8a1269E84c8d4a63Fd32976a04903495c93ED
+        0xE513567725a74A92fb1a1F675a38BdD343605eEb
+        0xE59014f168adA2f3ea0170434227549B8C72Fb84
+        0x8D18E6F89B811695Ed333d248A68C532d1B261ed
     ];
 
     /// @notice The address of the deployer account.
