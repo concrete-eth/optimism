@@ -7,7 +7,7 @@ GETH_CHAINDATA_DIR="$GETH_DATA_DIR/geth/chaindata"
 GENESIS_FILE_PATH="${GENESIS_FILE_PATH:-/genesis.json}"
 CHAIN_ID=$(cat "$GENESIS_FILE_PATH" | jq -r .config.chainId)
 RPC_PORT="${RPC_PORT:-8545}"
-WS_PORT="${WS_PORT:-8546}"
+WS_PORT="${WS_PORT:-8545}"
 
 if [ ! -d "$GETH_CHAINDATA_DIR" ]; then
 	echo "$GETH_CHAINDATA_DIR missing, running init"
