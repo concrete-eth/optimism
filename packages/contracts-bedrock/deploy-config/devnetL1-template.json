@@ -68,7 +68,7 @@
   "daResolveWindow": 160,
   "daBondSize": 1000000,
   "daResolverRefundPercentage": 0,
-  "l2TickGasLimit": "17D7840",
+  "l2TickGasLimit": "0x17D7840",
   "l2TickOwnerAddress": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   "l2TickTargetAddress": "0x0000000000000000000000000000000000000000"
 }
