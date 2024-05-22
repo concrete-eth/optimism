@@ -17,7 +17,8 @@ import (
 // If these values are changed, it is subject to breaking tests. They
 // must be in sync with the values in the DeployConfig used to create the system.
 var DefaultMnemonicConfig = &MnemonicConfig{
-	Mnemonic:     "test test test test test test test test test test test junk",
+	// Mnemonic:     "test test test test test test test test test test test junk",
+	Mnemonic:     "gaze join simple struggle aerobic expand easy faculty supply shoe chunk beach",
 	CliqueSigner: "m/44'/60'/0'/0/0",
 	Proposer:     "m/44'/60'/0'/0/1",
 	Batcher:      "m/44'/60'/0'/0/2",
