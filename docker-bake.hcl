@@ -27,7 +27,7 @@ variable "PLATFORMS" {
   // Only a specify a single platform when `--load` ing into docker.
   // Multi-platform is supported when outputting to disk or pushing to a registry.
   // Multi-platform builds can be tested locally with:  --set="*.output=type=image,push=false"
-  default = "linux/amd64"
+  default = "linux/arm64"
 }
 
 target "op-stack-go" {
