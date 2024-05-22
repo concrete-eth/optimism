@@ -471,20 +471,14 @@ contract L2Genesis is Deployer {
         vm.resetNonce(address(eas));
     }
 
-     /// @notice This predeploy is following the safety invariant #2.
     function setTick() public {
-        Tick tick = new Tick({
-            _owner: cfg.l2TickOwnerAddress(),
-            _target: cfg.l2TickTargetAddress()
-        });
-
-        address impl = Predeploys.predeployToCodeNamespace(Predeploys.TICK);
-        console.log("Setting %s implementation at: %s", "Tick", impl);
-        vm.etch(impl, address(tick).code);
-
-        /// Reset so its not included state dump
-        vm.etch(address(tick), "");
-        vm.resetNonce(address(tick));
+        address impl = _setImplementationCode(Predeploys.TICK);
+        bytes32 _ownerSlot = bytes32(0);
+        vm.store(
+            Predeploys.TICK,
+            _ownerSlot,
+            bytes32(uint256(uint160(cfg.l2TickOwnerAddress())))
+        );
     }
 
     /// @notice Sets all the preinstalls.

@@ -36,7 +36,7 @@ func TickDeposit(rollupCfg *rollup.Config, sysCfg eth.SystemConfig, seqNumber ui
 		To:                  &TickAddress,
 		Mint:                nil,
 		Value:               big.NewInt(0),
-		Gas:                 sysCfg.TickGasLimit,
+		Gas:                 rollupCfg.TickGasLimit,
 		IsSystemTransaction: true,
 		Data:                TickFuncBytes4,
 	}
